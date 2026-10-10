@@ -1,7 +1,5 @@
 # zte_onu
 
-<p align="right">点下方任一标题条即可切换整页语言 · Click either bar below to switch the whole page</p>
-
 <details name="lang" open>
 <summary><b>English</b> — click to collapse</summary>
 
