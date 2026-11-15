@@ -311,36 +311,28 @@ func rsaGen(rnd *rand.Rand, siMod int) rsaKey {
 	for hi > lo && hi*hi > capVal {
 		hi--
 	}
-	span := hi - lo + 1
 
-	var p, q int
+	// 只取素数：保证 N=p*q 无平方因子，phi=(p-1)(q-1) 恒成立
+	primes := make([]int, 0, hi-lo+1)
+	for n := lo; n <= hi; n++ {
+		if isPrime(n) {
+			primes = append(primes, n)
+		}
+	}
+
+	var p, q, n int
 	for {
-		p = lo + rnd.Intn(hi-lo+1)
-		for !isPrime(p) {
-			p++
-		}
-		if p > hi {
-			p = lo
-		}
-		q = lo + rnd.Intn(hi-lo+1)
-		guard := 0
-		for (p == q || !isPrime(q)) && guard <= span {
-			q--
-			if q < lo {
-				q = hi
-			}
-			guard++
-		}
-		if p == q || !isPrime(q) {
+		p = primes[rnd.Intn(len(primes))]
+		q = primes[rnd.Intn(len(primes))]
+		if p == q {
 			continue
 		}
-		nTry := p * q
-		if 255 < nTry && nTry <= capVal && gcd(nTry, siMod) == 1 {
+		n = p * q
+		if 255 < n && n <= capVal && gcd(n, siMod) == 1 {
 			break
 		}
 	}
 
-	n := p * q
 	phi := (p - 1) * (q - 1)
 	cand := make([]int, 0, 100)
 	for e := phi - 1; e > 1 && len(cand) < 100; e-- {
@@ -348,8 +340,8 @@ func rsaGen(rnd *rand.Rand, siMod int) rsaKey {
 			cand = append(cand, e)
 		}
 	}
-	ev := cand[rnd.Intn(len(cand))]
-	return rsaKey{P: p, Q: q, N: n, Phi: phi, E: ev, D: modInverse(ev, phi)}
+	E := cand[rnd.Intn(len(cand))]
+	return rsaKey{P: p, Q: q, N: n, Phi: phi, E: E, D: modInverse(E, phi)}
 }
 
 func buildSendInfo(serverMAC []byte, seq [][]byte, rsa rsaKey, siExp, siMod int) []byte {
